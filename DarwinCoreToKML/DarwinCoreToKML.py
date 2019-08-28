@@ -94,9 +94,23 @@ class DarwinPlacemark:
 
 class PlacemarkFolder:
     def __init__(self, name):
-        self.Name = Name
+        self.Name = name
         self.Folders = {}
         self.Placemarks = []
+        
+    def __lt__(self, compareTo):
+        return self.Name < compareTo.Name
+        
+    def __str__(self):
+        out = '<Folder>\n' +\
+                '<Name>{0}</Name>\n'.format(self.Name)
+        folders = list(self.Folders.values())
+        folders.sort()
+        for f in folders: out = out + str(f)
+        self.Placemarks.sort()
+        for p in self.Placemarks: out = out + str(p)
+        out = out + '</Folder>\n'
+        return out
         
     def AddFolder(self, name):
         folder = PlacemarkFolder(name)
@@ -105,7 +119,44 @@ class PlacemarkFolder:
     
     def ContainsFolder(self, name):
         return name in self.Folders
+ 
+
+class KMLFile:
+    def __init__(self):
+        self.Folders = {}
+        self.Placemarks = []
+        self.Styles = []
     
+    def AddPlacemark(self, placemark, neststructure=None):
+        curFolder = None
+        if neststructure != None:
+            if len(neststructure) >= 1:
+                value = placemark.GetValue(neststructure[0])
+                if value in self.Folders:
+                    curFolder = self.Folders[value]
+                else:
+                    curFolder = PlacemarkFolder(value)
+                    self.Folders[value] = curFolder
+
+                for n in range(1, len(neststructure)):
+                    value = placemark.GetValue(neststructure[n])
+                    if not curFolder.ContainsFolder(value):
+                        curFolder = curFolder.AddFolder(value)
+                    else:
+                        curFolder = curFolder.Folders[value]
+                curFolder.Placemarks.append(placemark)
+        else:
+            self.Placemarks.append(placemark)
+    
+    def __str__(self):
+        out = '<kml>\n'
+        folders = list(self.Folders.values())
+        folders.sort()
+        for f in folders: out = out + str(f)
+        self.Placemarks.sort()
+        for p in self.Placemarks: out = out + str(p)
+        out = out + '</kml>'
+        return out
 
 def convert(inputFile, outputFile, delimiter):
     #Open File for Reading
@@ -119,6 +170,7 @@ def convert(inputFile, outputFile, delimiter):
     
     header = rows[0].split(delimiter)
     placemarks = []
+    kmlfile = KMLFile()
     
     #Process each data entry
     for rowIdx in range(1,len(rows)):
@@ -127,12 +179,12 @@ def convert(inputFile, outputFile, delimiter):
         for dataIdx in range(0, len(dataEntry)):
             data[header[dataIdx]] = dataEntry[dataIdx]
         d = DarwinPlacemark(data)
-        placemarks.append(d)
+        #placemarks.append(d)
+        kmlfile.AddPlacemark(d,['genus','specificEpithet'])
     
-    
-    placemarks.sort()
-    for d in placemarks: outfile.write(str(d))
-
+    #placemarks.sort()
+    #for d in placemarks: outfile.write(str(d))
+    outfile.write(str(kmlfile))
 if __name__ == '__main__':
     if len(sys.argv) > 2:
         convert(sys.argv[1],sys.argv[2],'\t')
