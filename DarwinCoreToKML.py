@@ -187,7 +187,6 @@ def convert(inputFile, outputFile, delimiter, groupBy):
         print("Only the header row exists")
     
     header = rows[0].split(delimiter)
-    placemarks = []
     kmlfile = KMLFile()
     
     #Process each data entry
