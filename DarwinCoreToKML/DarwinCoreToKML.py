@@ -1,6 +1,26 @@
+import sys
 
-filepath = "allNan.txt"
-delim = '\t'
+ColumnTitleDataMap = {
+    'Species':'genus specificEpithet subspecies',
+    'Catalog Number': 'catalogNumber',
+    'Individual Count': 'individualCount',
+    'Sex': 'sex',
+    'Life Stage': 'lifeStage',
+    'Record Number': 'recordNumber',
+    'Collected By': 'recordedBy',
+    'Date Collected': 'eventDate',
+    'Habitat': 'habitat',
+    'Locality': 'locality',
+    'County': 'county',
+    'State/Province': 'stateProvince',
+    'Country': 'country',
+    'Elevation': 'minimumElevationInMeters',
+    'Uncertainty': 'coordinateUncertaintyInMeters',
+    'Family': 'family',
+    'Order': 'order',
+    'Preparations': 'preparations',
+    'Institution Code': 'institutionCode',
+    'Collection Code': 'collectionCode'}
 
 ColumnTitleOrder = [
     'Species',
@@ -24,27 +44,6 @@ ColumnTitleOrder = [
     'Institution Code',
     'Collection Code']
 
-ColumnTitleDataMap = {
-    'Species':'genus specificEpithet subspecies',
-    'Catalog Number': 'catalogNumber',
-    'Individual Count': 'individualCount',
-    'Sex': 'sex',
-    'Life Stage': 'lifeStage',
-    'Record Number': 'recordNumber',
-    'Collected By': 'recordedBy',
-    'Date Collected': 'eventDate',
-    'Habitat': 'habitat',
-    'Locality': 'locality',
-    'County': 'county',
-    'State/Province': 'stateProvince',
-    'Country': 'country',
-    'Elevation': 'minimumElevationInMeters',
-    'Uncertainty': 'coordinateUncertaintyInMeters',
-    'Family': 'family',
-    'Order': 'order',
-    'Preparations': 'preparations',
-    'Institution Code': 'institutionCode',
-    'Collection Code': 'collectionCode'}
 
 
 class DarwinPlacemark:
@@ -93,30 +92,49 @@ class DarwinPlacemark:
                   '</Point>\n'+\
                   '</Placemark>\n'
 
+class PlacemarkFolder:
+    def __init__(self, name):
+        self.Name = Name
+        self.Folders = {}
+        self.Placemarks = []
+        
+    def AddFolder(self, name):
+        folder = PlacemarkFolder(name)
+        self.Folders[name] = folder
+        return folder
+    
+    def ContainsFolder(self, name):
+        return name in self.Folders
+    
 
-#Open File for Reading
-file = open(filepath,'r')
-outfile = open('test.kml','w')
-rows = file.readlines();
-if len(rows) <= 0:
-    print("File Is Empty or an Error occurred reading it")
-elif len(rows) == 1:
-    print("Only the header row exists")
+def convert(inputFile, outputFile, delimiter):
+    #Open File for Reading
+    file = open(inputFile,'r',encoding='latin-1')
+    outfile = open(outputFile,'w')
+    rows = file.readlines();
+    if len(rows) <= 0:
+        print("File Is Empty or an Error occurred reading it")
+    elif len(rows) == 1:
+        print("Only the header row exists")
+    
+    header = rows[0].split(delimiter)
+    placemarks = []
+    
+    #Process each data entry
+    for rowIdx in range(1,len(rows)):
+        dataEntry = rows[rowIdx].split(delimiter)
+        data = {}
+        for dataIdx in range(0, len(dataEntry)):
+            data[header[dataIdx]] = dataEntry[dataIdx]
+        d = DarwinPlacemark(data)
+        placemarks.append(d)
+    
+    
+    placemarks.sort()
+    for d in placemarks: outfile.write(str(d))
 
-header = rows[0].split(delim)
-placemarks = []
-
-#Process each data entry
-for rowIdx in range(1,len(rows)):
-    dataEntry = rows[rowIdx].split(delim)
-    data = {}
-    for dataIdx in range(0, len(dataEntry)):
-        data[header[dataIdx]] = dataEntry[dataIdx]
-    d = DarwinPlacemark(data)
-    placemarks.append(d)
-
-
-placemarks.sort()
-for d in placemarks: outfile.write(str(d))
-
-
+if __name__ == '__main__':
+    if len(sys.argv) > 2:
+        convert(sys.argv[1],sys.argv[2],'\t')
+    else:
+        print("usage: DarwinCoreToKML.py [Input File] [Output File]")
