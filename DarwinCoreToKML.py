@@ -166,16 +166,20 @@ class KMLFile:
             self.Placemarks.append(placemark)
             
     def _getRandomStyleColor(self,id):
+        bgr = randrange(3)
+        b = 255 if bgr==0 else 100
+        g = 255 if bgr==1 else 100
+        r = 255 if bgr==2 else 100
         color = 'ff{0}{1}{2}'.format(
-                hex(randrange(75,200,5)).lstrip('0x'),
-                hex(randrange(75,200,5)).lstrip('0x'),
-                hex(randrange(75,200,5)).lstrip('0x'))
+                hex(randrange(b-40,b,5)).lstrip('0x').rjust(2,'0'),
+                hex(randrange(g-40,g,5)).lstrip('0x').rjust(2,'0'),
+                hex(randrange(r-40,r,5)).lstrip('0x').rjust(2,'0'))
         style = '<Style id="{0}">\n'.format(id) +\
                 '<IconStyle>\n' +\
                 '<color>{0}</color>\n'.format(color) +\
                 '<colorMode>normal</colorMode>' +\
                 '<Icon>\n'+\
-                '<href>http://maps.google.com/mapfiles/kml/pal3/icon21.png</href>' +\
+                '<href>http://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href>' +\
                 '</Icon>\n' +\
                 '</IconStyle>\n' +\
                 '</Style>\n'
