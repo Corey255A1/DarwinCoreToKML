@@ -4,6 +4,7 @@
 
 #import sys for commandline arguments
 import sys
+from random import randrange
 
 #Mapping the Darwin Column names to human readable Titles
 ColumnTitleDataMap = {
@@ -92,8 +93,10 @@ class DarwinPlacemark:
             print("Could not find {0} in ColumnTitleDataMap".format(title))
 
         #why is KML Longitude Latitude
+        #Color Styles Created during KML export
         return    '<Placemark>\n' +\
                   '<name>{0}</name>\n'.format(self.Name) +\
+                  '<styleUrl>#{0}</styleUrl>'.format(self.Data['genus']) +\
                   '<description><![CDATA[<div class="googft-info-window">\n{0}</div>]]></description>\n'.format(description)+\
                   '<Point>\n'+\
                   '\t<coordinates>{0},{1},{2}</coordinates>\n'.format(self.Longitude, self.Latitude, 0) +\
@@ -121,7 +124,7 @@ class PlacemarkFolder:
         
     def __str__(self):
         out = '<Folder>\n' +\
-                '<name>{0}</name>\n'.format(self.Name)
+              '<name>{0}</name>\n'.format(self.Name)
         folders = list(self.Folders.values())
         folders.sort()
         for f in folders: out = out + str(f)
@@ -161,6 +164,22 @@ class KMLFile:
                 curFolder.Placemarks.append(placemark)
         else:
             self.Placemarks.append(placemark)
+            
+    def _getRandomStyleColor(self,id):
+        color = 'ff{0}{1}{2}'.format(
+                hex(randrange(75,200,5)).lstrip('0x'),
+                hex(randrange(75,200,5)).lstrip('0x'),
+                hex(randrange(75,200,5)).lstrip('0x'))
+        style = '<Style id="{0}">\n'.format(id) +\
+                '<IconStyle>\n' +\
+                '<color>{0}</color>\n'.format(color) +\
+                '<colorMode>normal</colorMode>' +\
+                '<Icon>\n'+\
+                '<href>http://maps.google.com/mapfiles/kml/pal3/icon21.png</href>' +\
+                '</Icon>\n' +\
+                '</IconStyle>\n' +\
+                '</Style>\n'
+        return style
     
     def __str__(self):
         out = '<?xml version="1.0" encoding="UTF-8"?>\n' +\
@@ -168,6 +187,9 @@ class KMLFile:
         '<Document>\n'
         folders = list(self.Folders.values())
         folders.sort()
+        #Output Color Styles
+        for f in folders: out = out + self._getRandomStyleColor(f.Name)
+        #Output folders
         for f in folders: out = out + str(f)
         self.Placemarks.sort()
         for p in self.Placemarks: out = out + str(p)
