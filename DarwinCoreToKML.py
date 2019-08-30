@@ -52,6 +52,13 @@ ColumnTitleOrder = [
     'Institution Code',
     'Collection Code']
 
+ColorMap ={
+    0:(255,0,0),
+    1:(0,255,0),
+    2:(0,0,255),
+    3:(255,255,0),
+    4:(255,0,255),
+    5:(0,255,255)}
 #Contains the Darwin Core Data. Converts to a KML Placemark string
 class DarwinPlacemark:
     def __init__(self, data):
@@ -140,7 +147,7 @@ class KMLFile:
         self.Folders = {}
         self.Placemarks = []
         self.Styles = []
-    
+        self._nextColor = 0;
     def AddPlacemark(self, placemark, neststructure=None):
         curFolder = None
         if neststructure != None:
@@ -165,15 +172,18 @@ class KMLFile:
         else:
             self.Placemarks.append(placemark)
             
-    def _getRandomStyleColor(self,id):
-        bgr = randrange(3)
-        b = 255 if bgr==0 else 100
-        g = 255 if bgr==1 else 100
-        r = 255 if bgr==2 else 100
+    def _getStyleColor(self,id):
+        colorIntensity = int(self._nextColor / 6)
+        color = (self._nextColor % 6)
+        (b,g,r) = ColorMap[color]
+        if b > 0: b = b - 20*colorIntensity
+        if g > 0: g = g - 20*colorIntensity
+        if r > 0: r = r - 20*colorIntensity
+        self._nextColor = self._nextColor + 1
         color = 'ff{0}{1}{2}'.format(
-                hex(randrange(b-40,b,5)).lstrip('0x').rjust(2,'0'),
-                hex(randrange(g-40,g,5)).lstrip('0x').rjust(2,'0'),
-                hex(randrange(r-40,r,5)).lstrip('0x').rjust(2,'0'))
+                hex(b).lstrip('0x').rjust(2,'0'),
+                hex(g).lstrip('0x').rjust(2,'0'),
+                hex(r).lstrip('0x').rjust(2,'0'))
         style = '<Style id="{0}">\n'.format(id) +\
                 '<IconStyle>\n' +\
                 '<color>{0}</color>\n'.format(color) +\
@@ -192,7 +202,7 @@ class KMLFile:
         folders = list(self.Folders.values())
         folders.sort()
         #Output Color Styles
-        for f in folders: out = out + self._getRandomStyleColor(f.Name)
+        for f in folders: out = out + self._getStyleColor(f.Name)
         #Output folders
         for f in folders: out = out + str(f)
         self.Placemarks.sort()
