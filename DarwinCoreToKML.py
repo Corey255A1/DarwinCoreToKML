@@ -71,7 +71,10 @@ class DarwinPlacemark:
         return self.Data[key]
 
     def _getLineFormat(self, header, data):
-        return "<b>{0}:</b> {1}<br>\n".format(header, data)
+        return '<b>{0}:</b> {1}<br>\n'.format(header, data)
+    
+    def _getLineFormatTable(self, header, data):
+        return '<tr><td width="100"><b>{0}</b></td><td>{1}</td></tr>\n'.format(header, data)
 
     #Get the value from the key. if the Key is seperated by spaces
     #e.g. for Species, then concat the values from all keys into single string
@@ -82,9 +85,9 @@ class DarwinPlacemark:
                 data = ' '.join([self.Data[k] for k in key.split(' ')])
             else:
                 data = self.Data[key]
-            return self._getLineFormat(title, data)
+            return self._getLineFormatTable(title, data)
         except KeyError:
-            print("Could not find key {0} in CSV data".format(key))
+            print('Could not find key {0} in CSV data'.format(key))
             return key
 
     def __lt__(self, compareTo):
@@ -92,13 +95,14 @@ class DarwinPlacemark:
         return (self.Data['genus'] < compareTo.Data['genus']) or (self.Data['genus'] == compareTo.Data['genus'] and self.Data['specificEpithet'] < compareTo.Data['specificEpithet'])
 
     def __str__(self):
-        description = ''
+        description = '<table border=1 style="width:500px">\n'
         try:
             for title in ColumnTitleOrder:
                 description = description + self._formatValue(title, ColumnTitleDataMap[title])
         except KeyError:
             print("Could not find {0} in ColumnTitleDataMap".format(title))
 
+        description = description + '</table>\n'
         #why is KML Longitude Latitude
         #Color Styles Created during KML export
         return    '<Placemark>\n' +\
