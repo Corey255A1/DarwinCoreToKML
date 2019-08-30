@@ -248,4 +248,4 @@ if __name__ == '__main__':
         convert(sys.argv[1],sys.argv[2],'\t',['genus','specificEpithet'])
     else:
         print('usage: DarwinCoreToKML.py [Input File] [Output File]')
-        print('If there are spaces in the file name or path, ensure to wrap in "" quotes')
+        print('If there are spaces in the file name or path, be sure to wrap in "" quotes')
