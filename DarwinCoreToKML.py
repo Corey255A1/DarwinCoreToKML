@@ -61,11 +61,13 @@ ColorMap ={
     5:(0,255,255)}
 #Contains the Darwin Core Data. Converts to a KML Placemark string
 class DarwinPlacemark:
-    def __init__(self, data):
+    def __init__(self, data, groupBy):
         self.Name = '{0} {1} {2}'.format(data['genus'],data['specificEpithet'],data['subspecies'])
         self.Latitude = data['decimalLatitude']
         self.Longitude = data['decimalLongitude']
         self.Data = data;
+        self.GroupByKeys = groupBy
+        self.GroupName = ' '.join([self.Data[k] for k in groupBy])
 
     def GetValue(self, key):
         return self.Data[key]
@@ -92,7 +94,13 @@ class DarwinPlacemark:
 
     def __lt__(self, compareTo):
         #Currently straight string comparing...
-        return (self.Data['genus'] < compareTo.Data['genus']) or (self.Data['genus'] == compareTo.Data['genus'] and self.Data['specificEpithet'] < compareTo.Data['specificEpithet'])
+        for k in self.GroupByKeys:
+            if self.Data[k] < compareTo.Data[k]:
+                return True
+            elif self.Data[k] == compareTo.Data[k]:
+                continue
+        return False
+        #return (self.Data['genus'] < compareTo.Data['genus']) or (self.Data['genus'] == compareTo.Data['genus'] and self.Data['specificEpithet'] < compareTo.Data['specificEpithet'])
 
     def __str__(self):
         description = '<table border=1 style="width:500px">\n'
@@ -106,8 +114,8 @@ class DarwinPlacemark:
         #why is KML Longitude Latitude
         #Color Styles Created during KML export
         return    '<Placemark>\n' +\
-                  '<name>{0}</name>\n'.format(self.Name) +\
-                  '<styleUrl>#{0}</styleUrl>'.format(self.Data['genus']) +\
+                  '<name>{0}</name>\n'.format(self.Name.strip()) +\
+                  '<styleUrl>#{0}</styleUrl>'.format(self.GroupName.strip()) +\
                   '<description><![CDATA[<div class="googft-info-window">\n{0}</div>]]></description>\n'.format(description)+\
                   '<Point>\n'+\
                   '\t<coordinates>{0},{1},{2}</coordinates>\n'.format(self.Longitude, self.Latitude, 0) +\
@@ -176,7 +184,12 @@ class KMLFile:
         else:
             self.Placemarks.append(placemark)
             
-    def _getStyleColor(self,id):
+    def _getStyleColor(self, folder, id, style=''):
+        #only colors for furthest nested
+        if len(folder.Folders)>0:
+            for f in folder.Folders.values():
+                style += self._getStyleColor(f, id + ' ' + f.Name)
+            return style
         colorIntensity = int(self._nextColor / 6)
         color = (self._nextColor % 6)
         (b,g,r) = ColorMap[color]
@@ -188,7 +201,7 @@ class KMLFile:
                 hex(b).lstrip('0x').rjust(2,'0'),
                 hex(g).lstrip('0x').rjust(2,'0'),
                 hex(r).lstrip('0x').rjust(2,'0'))
-        style = '<Style id="{0}">\n'.format(id) +\
+        style = '<Style id="{0}">\n'.format(id.strip()) +\
                 '<IconStyle>\n' +\
                 '<color>{0}</color>\n'.format(color) +\
                 '<colorMode>normal</colorMode>' +\
@@ -206,7 +219,7 @@ class KMLFile:
         folders = list(self.Folders.values())
         folders.sort()
         #Output Color Styles
-        for f in folders: out = out + self._getStyleColor(f.Name)
+        for f in folders: out = out + self._getStyleColor(f, f.Name)
         #Output folders
         for f in folders: out = out + str(f)
         self.Placemarks.sort()
@@ -228,14 +241,13 @@ def convert(inputFile, outputFile, delimiter, groupBy):
     
     header = rows[0].split(delimiter)
     kmlfile = KMLFile()
-    
     #Process each data entry
     for rowIdx in range(1,len(rows)):
         dataEntry = rows[rowIdx].split(delimiter)
         data = {}
         for dataIdx in range(0, len(dataEntry)):
             data[header[dataIdx]] = dataEntry[dataIdx]
-        d = DarwinPlacemark(data)
+        d = DarwinPlacemark(data, groupBy)
         #Add the place mark and group by genus and specificEpithet
         kmlfile.AddPlacemark(d,groupBy)
 
