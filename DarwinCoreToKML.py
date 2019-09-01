@@ -188,7 +188,7 @@ class KMLFile:
         #only colors for furthest nested
         if len(folder.Folders)>0:
             for f in folder.Folders.values():
-                style += self._getStyleColor(f, id + ' ' + f.Name)
+                style += self._getStyleColor(f, id + ' ' + f.Name, style)
             return style
         colorIntensity = int(self._nextColor / 6)
         color = (self._nextColor % 6)
@@ -201,7 +201,7 @@ class KMLFile:
                 hex(b).lstrip('0x').rjust(2,'0'),
                 hex(g).lstrip('0x').rjust(2,'0'),
                 hex(r).lstrip('0x').rjust(2,'0'))
-        style = '<Style id="{0}">\n'.format(id.strip()) +\
+        newstyle = '<Style id="{0}">\n'.format(id.strip()) +\
                 '<IconStyle>\n' +\
                 '<color>{0}</color>\n'.format(color) +\
                 '<colorMode>normal</colorMode>' +\
@@ -210,7 +210,7 @@ class KMLFile:
                 '</Icon>\n' +\
                 '</IconStyle>\n' +\
                 '</Style>\n'
-        return style
+        return newstyle
     
     def __str__(self):
         out = '<?xml version="1.0" encoding="UTF-8"?>\n' +\
