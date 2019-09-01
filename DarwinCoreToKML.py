@@ -115,7 +115,7 @@ class DarwinPlacemark:
         #Color Styles Created during KML export
         return    '<Placemark>\n' +\
                   '<name>{0}</name>\n'.format(self.Name.strip()) +\
-                  '<styleUrl>#{0}</styleUrl>'.format(self.GroupName.strip()) +\
+                  '<styleUrl>#{0}</styleUrl>\n'.format(self.GroupName.strip()) +\
                   '<description><![CDATA[<div class="googft-info-window">\n{0}</div>]]></description>\n'.format(description)+\
                   '<Point>\n'+\
                   '\t<coordinates>{0},{1},{2}</coordinates>\n'.format(self.Longitude, self.Latitude, 0) +\
